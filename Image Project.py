@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 try:
     from tkinter import *
@@ -24,31 +25,24 @@ def to_grayscale(img):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     return cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
 
-
 def rotate_image(img):
     return cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-
 
 def flip_image(img):
     return cv2.flip(img, 1)
 
-
 def blur_image(img):
     return cv2.GaussianBlur(img, (11, 11), 0)
-
 
 def detect_edges(img):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     edge = cv2.Canny(gray, 100, 200)
     return cv2.cvtColor(edge, cv2.COLOR_GRAY2RGB)
 
-
 def histogram_equalization(img):
     img_yuv = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
     img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
     return cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB)
-
-
 
 def run_cli():
     print("Running safe CLI test mode...")
@@ -90,7 +84,7 @@ if GUI_AVAILABLE:
         if current_img is not None:
             current_img = func(current_img)
             show_image(current_img)
-            status_var.set("Effect applied")
+            status_var.set("Effect applied")        
 
     def apply_blur():
         global current_img
@@ -116,7 +110,22 @@ if GUI_AVAILABLE:
         if path:
             cv2.imwrite(path, cv2.cvtColor(current_img, cv2.COLOR_RGB2BGR))
             status_var.set("Image saved")
+    def show_histogram():
+        if current_img is None:
+            return
 
+        plt.figure("Histogram")
+
+        colors = ('r', 'g', 'b')
+        for i, col in enumerate(colors):
+            hist = cv2.calcHist([current_img], [i], None, [256], [0, 256])
+            plt.plot(hist, color=col)
+
+        plt.title("RGB Histogram")
+        plt.xlabel("Pixel Value")
+        plt.ylabel("Frequency")
+
+        plt.show()   
     
     root = Tk()
     root.title("✨ Advanced Image Processing Tool")
@@ -152,6 +161,7 @@ if GUI_AVAILABLE:
     styled_button("Flip", lambda: apply(flip_image)).pack(pady=3)
     styled_button("Edges", lambda: apply(detect_edges)).pack(pady=3)
     styled_button("Histogram", lambda: apply(histogram_equalization)).pack(pady=3)
+    styled_button("Show Histogram", show_histogram).pack(pady=3)
 
    
     Label(control_frame, text="Blur Strength",
@@ -168,7 +178,6 @@ if GUI_AVAILABLE:
     styled_button("Reset", reset).pack(pady=3)
     styled_button("Save", save_image).pack(pady=3)
 
-
     status_var = StringVar()
     status_var.set("Ready")
 
@@ -184,20 +193,15 @@ else:
 def _test():
     img = np.zeros((100, 100, 3), dtype=np.uint8)
 
-    
     assert to_grayscale(img).shape == img.shape
     assert rotate_image(img).shape == img.shape
     assert flip_image(img).shape == img.shape
     assert blur_image(img).shape == img.shape
     assert detect_edges(img).shape == img.shape
     assert histogram_equalization(img).shape == img.shape
-
-    
     assert to_grayscale(img).dtype == np.uint8
-
     edges = detect_edges(img)
     assert np.sum(edges) == 0
-
     print("All tests passed successfully!")
 
 if __name__ == "__main__":
